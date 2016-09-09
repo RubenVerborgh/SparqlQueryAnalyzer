@@ -18,12 +18,13 @@ function analyzeQuery(query) {
 }
 
 function analyzeBlock(block) {
+  const subPatterns = (block.patterns || block.where || []).map(analyzeBlock);
+  const triplePatterns = analyzeTriplePatterns(block.triples || []);
   const analysis = {
     count: { [block.type]: 1, triplePattern: (block.triples || []).length },
+    depth: Math.max(0, ...subPatterns.map(s => s.depth || 1)) + 1,
   };
-  const subPatterns = block.patterns || block.where || [];
-  const triplePatterns = analyzeTriplePatterns(block.triples || []);
-  return merge(analysis, ...subPatterns.map(analyzeBlock), triplePatterns);
+  return merge(analysis, ...subPatterns, triplePatterns);
 }
 
 function analyzeTriplePatterns(patterns) {
@@ -45,6 +46,7 @@ function merge(...objects) {
   });
 }
 merge.count = (a, b) => (_.mergeWith(a, b, (x, y) => (x || 0) + (y || 0)));
+merge.depth = (a, b) => Math.max(a || 0, b || 0);
 
 function isVar(entity) {
   return entity[0] === '?';
