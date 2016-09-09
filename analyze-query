@@ -22,7 +22,20 @@ function analyzeBlock(block) {
     count: { [block.type]: 1, triplePattern: (block.triples || []).length },
   };
   const subPatterns = block.patterns || block.where || [];
-  return merge(analysis, ...subPatterns.map(analyzeBlock), triplePatternCounts);
+  const triplePatterns = analyzeTriplePatterns(block.triples || []);
+  return merge(analysis, ...subPatterns.map(analyzeBlock), triplePatterns);
+}
+
+function analyzeTriplePatterns(patterns) {
+  const counts = {};
+  for (pattern of patterns) {
+    const fingerprint = 'tp_' +
+                        (isVar(pattern.subject)   ? '?' : 's') +
+                        (isVar(pattern.predicate) ? '?' : 'p') +
+                        (isVar(pattern.object)    ? '?' : 'o');
+    counts[fingerprint] = (counts[fingerprint] || 0) + 1;
+  }
+  return { count: counts };
 }
 
 function merge(...objects) {
@@ -32,5 +45,9 @@ function merge(...objects) {
   });
 }
 merge.count = (a, b) => (_.mergeWith(a, b, (x, y) => (x || 0) + (y || 0)));
+
+function isVar(entity) {
+  return entity[0] === '?';
+}
 
 console.log(JSON.stringify(analyzeQueryFile(args[0]), null, 2));
