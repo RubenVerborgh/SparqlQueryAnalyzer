@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+const args = process.argv.slice(2);
+
+if (args.length !== 1) {
+  console.error('usage: ./json-to-tsv json.json');
+  process.exit(1);
+}
+
+const fs = require('fs');
+
+function convertJsonFile(file) {
+  return convertObject(JSON.parse(fs.readFileSync(file, { encoding: 'utf8' })));
+}
+
+function convertObject(object) {
+  object = flatten(object);
+  console.log(Object.keys(object).join('\t'));
+  console.log(Object.keys(object).map(k => object[k]).join('\t'));
+}
+
+function flatten(object) {
+  const flattened = {};
+  for (const key in object) {
+    const item = object[key];
+    if (item instanceof Object) {
+      const flattenedItem = flatten(item);
+      for (const itemKey in flattenedItem)
+        flattened[key + '_' + itemKey] = flattenedItem[itemKey];
+    }
+    else {
+      flattened[key] = object[key];
+    }
+  }
+  return flattened;
+}
+
+convertJsonFile(args[0]);
