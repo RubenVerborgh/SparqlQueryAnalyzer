@@ -20,11 +20,12 @@ function analyzeQuery(query) {
 function analyzeBlock(block) {
   const subPatterns = (block.patterns || block.where || []).map(analyzeBlock);
   const triplePatterns = analyzeTriplePatterns(block.triples || []);
+  const variables =  analyzeVariables(block.variables || []);
   const analysis = {
     count: { [block.type]: 1, triplePattern: (block.triples || []).length },
     depth: Math.max(0, ...subPatterns.map(s => s.depth || 1)) + 1,
   };
-  return merge(analysis, ...subPatterns, triplePatterns);
+  return merge(analysis, ...subPatterns, triplePatterns, variables);
 }
 
 function analyzeTriplePatterns(patterns) {
@@ -34,7 +35,21 @@ function analyzeTriplePatterns(patterns) {
                         (isVar(pattern.subject)   ? '?' : 's') +
                         (isVar(pattern.predicate) ? '?' : 'p') +
                         (isVar(pattern.object)    ? '?' : 'o');
-    counts[fingerprint] = (counts[fingerprint] || 0) + 1;
+    increment(counts, fingerprint);
+  }
+  return { count: counts };
+}
+
+function analyzeVariables(variables) {
+  const counts = {};
+  for (variable of variables) {
+    const expression = variable.expression;
+    if (expression) {
+      if (expression.distinct)
+        increment(counts, 'distinct');
+      if (expression.aggregation)
+        increment(counts, 'aggregation_' + expression.aggregation);
+    }
   }
   return { count: counts };
 }
@@ -50,6 +65,10 @@ merge.depth = (a, b) => Math.max(a || 0, b || 0);
 
 function isVar(entity) {
   return entity[0] === '?';
+}
+
+function increment(object, key) {
+  object[key] = (object[key] || 0) + 1;
 }
 
 console.log(JSON.stringify(analyzeQueryFile(args[0]), null, 2));
