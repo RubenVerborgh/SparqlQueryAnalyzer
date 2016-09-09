@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+const args = process.argv.slice(2);
+
+if (args.length !== 1) {
+  console.error('usage: ./analyze-query query.json');
+  process.exit(1);
+}
+
+const fs = require('fs'),
+      _ = require('lodash');
+
+function analyzeQueryFile(file) {
+  return analyzeQuery(JSON.parse(fs.readFileSync(file, { encoding: 'utf8' })));
+}
+
+function analyzeQuery(query) {
+  return merge({ kind: query.type }, analyzeBlock(query));
+}
+
+function analyzeBlock(block) {
+  const analysis = {
+    count: { [block.type]: 1, triplePattern: (block.triples || []).length },
+  };
+  const subPatterns = block.patterns || block.where || [];
+  return merge(analysis, ...subPatterns.map(analyzeBlock), triplePatternCounts);
+}
+
+function merge(...objects) {
+  return _.mergeWith({}, ...objects, (x, y, key) => {
+    if (key in merge)
+      return merge[key](x, y);
+  });
+}
+merge.count = (a, b) => (_.mergeWith(a, b, (x, y) => (x || 0) + (y || 0)));
+
+console.log(JSON.stringify(analyzeQueryFile(args[0]), null, 2));

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "sparqljs": "^1.1.4"
+  }
+}
