@@ -14,9 +14,11 @@ function analyzeQueryFile(file) {
 }
 
 function analyzeQuery(query) {
-  var analysis = {
+  const json = JSON.stringify(query, null, '  ');
+  const analysis = {
     kind: query.type,
-    jsonSize: JSON.stringify(query).length,
+    jsonSize: json.length,
+    jsonLines: json.split('\n').length,
   };
   return merge(analysis, analyzeBlock(query));
 }
