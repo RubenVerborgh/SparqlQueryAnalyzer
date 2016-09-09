@@ -26,7 +26,11 @@ function analyzeBlock(block) {
   const triplePatterns = analyzeTriplePatterns(block.triples || []);
   const variables =  analyzeVariables(block.variables || []);
   const analysis = {
-    count: { [block.type]: 1, triplePattern: (block.triples || []).length },
+    count: {
+      [block.type]: 1,
+      triplePattern: (block.triples || []).length,
+      keys: Object.keys(block).length,
+    },
     depth: Math.max(0, ...subPatterns.map(s => s.depth || 1)) + 1,
   };
   return merge(analysis, ...subPatterns, triplePatterns, variables);
