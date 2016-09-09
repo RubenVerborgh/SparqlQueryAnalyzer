@@ -14,7 +14,11 @@ function analyzeQueryFile(file) {
 }
 
 function analyzeQuery(query) {
-  return merge({ kind: query.type }, analyzeBlock(query));
+  var analysis = {
+    kind: query.type,
+    jsonSize: JSON.stringify(query).length,
+  };
+  return merge(analysis, analyzeBlock(query));
 }
 
 function analyzeBlock(block) {
